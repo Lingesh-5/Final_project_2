@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: aliceblue;">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+    <script>
+        function save() {
+            const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+            const appendAlert = (message, type) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = [
+                    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+                    `   <div>${message}</div>`,
+                    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+                    '</div>'
+                ].join('');
+
+                alertPlaceholder.appendChild(wrapper);
+            }
+            const form = document.getElementById("product");
+            if(form.checkValidity()) {
+                const name = document.getElementById("name").value;
+            const price = document.getElementById("price").value;
+            const brand = document.getElementById("brand").value;
+            const description = document.getElementById("description").value;
+            const productId = document.getElementById("productId").value;
+
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer " + token);
+            console.log(myHeaders);
+
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: JSON.stringify({ "name": name, "price": price, "brand": brand, "description": description, "id": productId }),
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/admin/rest/save-product", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    console.log(result);
+                    if (result.name) {
+                        document.getElementById("name").value = result.name;
+                    }
+                    if (result.brand) {
+                        document.getElementById("brand").value = result.brand;
+                    }
+                    if (result.description) {
+                        document.getElementById("description").value = result.description;
+                    }
+                    if (result.status == "Saved successfully") {
+                        appendAlert(result.status, "success");
+                        onload();
+                    }
+                })
+                .catch((error) => console.error(error));
+            }else {
+                form.reportValidity();
+            }
+        }
+        function onload() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch("http://localhost:8080/admin/rest/get-product", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    const resp = result;
+                    loadData(resp.body.products);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(products) {
+                const tbody = document.getElementById("content");
+                tbody.innerHTML = '';
+                if (products.length == 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center">-- No Record --</td></tr>`;
+                } else {
+                    products.forEach(product => {
+                        tbody.innerHTML = tbody.innerHTML + `<tr>
+            			<td>${product.name}</td>
+						<td>${product.price}</td>
+            			<td>${product.brand}</td>
+                        <td>${product.description}</td>
+                		<td>
+                    		<button onclick="editProperty('${product.id}')" class="btn btn-secondary">Edit</button>
+                            <button onclick="deleteProduct('${product.id}')" class="btn btn-danger">delete</button>
+                		</td>
+        		        </tr>`
+                    })
+                }
+            }
+        }
+        onload();
+        function deleteProduct(id) {
+            const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+            const appendAlert = (message, type) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = [
+                    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+                    `   <div>${message}</div>`,
+                    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+                    '</div>'
+                ].join('');
+
+                alertPlaceholder.appendChild(wrapper);
+            }
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "DELETE",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/admin/rest/delete-product/${id}`, requestOptions)
+                .then((response) => response.text())
+                .then((result) => {
+                    appendAlert(result, "success");
+                    onload();
+                })
+                .catch((error) => console.error(error));
+        }
+        function editProperty(id) {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/admin/rest/get-productById/${id}`, requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    document.getElementById("name").value = result.body.product.name;
+                    document.getElementById("price").value = result.body.product.price;
+                    document.getElementById("brand").value = result.body.product.brand;
+                    document.getElementById("description").value = result.body.product.description;
+                    document.getElementById("productId").value = result.body.product.id;
+                })
+                .catch((error) => console.error(error));
+        }
+        function orderListrPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/admin/order-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Orders list" onclick="orderListrPage()" />
+                </nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path
+                            d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container border border-top-0 border-secondary p-5 mt-5">
+            <div class="border-bottom border-black">
+                <h1>Add Product</h1>
+            </div><br />
+            <div id="liveAlertPlaceholder" class="position-fixed"></div>
+            <form id="product">
+                <div class="row">
+                    <div class="col md-6 p-4">
+                        <label for="name" class="form-label">Name:</label>
+                        <input type="text" class="form-control" id="name" name="name" />
+                        <label for="price" class="form-label">Price:</label>
+                        <input type="number" class="form-control" id="price" name="price" required /><br />
+                        <input type="button" value="save" class="btn btn-primary" onclick="save()" />
+                        <input type="reset" value="New/Reset" class="btn btn-warning" />
+                        <input type="hidden" id="productId" />
+                    </div>
+                    <div class="col md-6 p-4">
+                            <label for="brand" class="form-label">Brand:</label>
+                            <input type="text" class="form-control" id="brand" name="brand" />
+                            <label for="description" class="form-label">Description:</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                    </div>
+                </div>
+            </form>
+            <div class="border-bottom border-black">
+                <h1>Products List</h1>
+            </div><br />
+            <table class="table table-success table-striped table-hover">
+                <thead>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Brand</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </thead>
+                <tbody id="content">
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: aliceblue;">
+    <script>
+        function onload() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch("http://localhost:8080/user/rest/get-allProduct", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    const resp = result;
+                    loadData(resp.body.products);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(products) {
+                const content = document.getElementById("content");
+                content.innerHTML = '';
+                if (products.length == 0) {
+                    content.innerHTML = `<span>No Record</span>`;
+                } else {
+                    products.forEach(product => {
+                        content.innerHTML = content.innerHTML + `
+                        <div class="card shadow-lg p-3 mb-5 bg-body-tertiary rounded" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title">${product.name}</h5>
+                                <div class="card-text">₹ ${product.price}</div>
+                                <div class="card-text">${product.brand}</div>
+                                <div class="card-text">${product.description}</div><br />
+                                <button class="btn btn-outline-primary" onclick="saveCart(${product.id})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" 
+                                    fill="#1f1f1f"><path d="M263.79-96Q234-96 213-117.21t-21-51Q192-198 213.21-219t51-21Q294-240 315-218.79t21 51Q336-138 314.79-117t-51 21Zm432 0Q666-96 645-117.21t-21-51Q624-198 645.21-219t51-21Q726-240 747-218.79t21 51Q768-138 746.79-117t-51 21ZM253-696l83 192h301l82-192H253Zm-31-72h570q14 0 20.5 11t1.5 23L702.63-476.14Q694-456 676.5-444T637-432H317l-42 72h493v72H276q-43 0-63.5-36.15-20.5-36.16.5-71.85l52-90-131-306H48v-72h133l41 96Zm114 264h301-301Z"/>
+                                    </svg> Add to cart</button>
+                            </div>
+                        </div>`
+                    })
+                }
+                const filterContent = document.getElementById("filterContent");
+                filterContent.innerHTML = '';
+                if (products.length == 0) {
+                    filterContent.innerHTML = `<span>No Record</span>`;
+                } else {
+                    let brandSet = new Set();
+                    products.forEach(product => {
+                        brandSet.add(product.brand);
+                    });
+                    brandSet.forEach(brand => {
+                        filterContent.innerHTML = filterContent.innerHTML + `
+                        <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="${brand}">
+                        <label class="form-check-label" for="${brand}">
+                            ${brand}
+                        </label>
+                    </div>`
+                    })
+                }
+            }
+
+        }
+        onload();
+        function filter(order) {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch("http://localhost:8080/user/rest/get-allProduct", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    const resp = result;
+                    loadData(resp.body.products, order);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(products, order) {
+
+                let brandSet = new Set();
+                let brands = new Set();
+                let tempProducts = new Array();
+                products.forEach(product => {
+                    brandSet.add(product.brand);
+                });
+                brandSet.forEach(brand => {
+                    if (document.getElementById(`${brand}`).checked) {
+                        brands.add(brand);
+                    }
+                });
+                products.forEach(product => {
+                    for (const element of brands) {
+                        if (product.brand == element) {
+                            tempProducts.push(product);
+                        }
+                    }
+                });
+                if (tempProducts.length != 0) {
+                    products = tempProducts;
+                }
+
+                const minPrice = document.getElementById("min").value;
+                const maxPrice = document.getElementById("max").value;
+                if (minPrice != "" && maxPrice != "") {
+                    products = products.filter(product => (product.price >= minPrice) && (product.price <= maxPrice));
+                }
+
+                if (order == "ascending") {
+                    products.sort((a, b) => a.price - b.price);
+                } else if (order == "descending") {
+                    products.sort((a, b) => b.price - a.price);
+                }
+
+                const name = document.getElementById("name").value;
+                if (name != "") {
+                    products = products.filter(product => product.name.toLowerCase().includes(name.toLowerCase()));
+                }
+
+                const content = document.getElementById("content");
+                content.innerHTML = '';
+                if (products.length == 0) {
+                    content.innerHTML = `<span>No Record</span>`;
+                } else {
+                    products.forEach(product => {
+                        content.innerHTML = content.innerHTML + `
+                        <div class="card shadow-lg p-3 mb-5 bg-body-tertiary rounded" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title">${product.name}</h5>
+                                <div class="card-text">₹ ${product.price}</div>
+                                <div class="card-text">${product.brand}</div>
+                                <div class="card-text">${product.description}</div><br />
+                                <button class="btn btn-outline-primary" onclick="saveCart(${product.id})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" 
+                                    fill="#1f1f1f"><path d="M263.79-96Q234-96 213-117.21t-21-51Q192-198 213.21-219t51-21Q294-240 315-218.79t21 51Q336-138 314.79-117t-51 21Zm432 0Q666-96 645-117.21t-21-51Q624-198 645.21-219t51-21Q726-240 747-218.79t21 51Q768-138 746.79-117t-51 21ZM253-696l83 192h301l82-192H253Zm-31-72h570q14 0 20.5 11t1.5 23L702.63-476.14Q694-456 676.5-444T637-432H317l-42 72h493v72H276q-43 0-63.5-36.15-20.5-36.16.5-71.85l52-90-131-306H48v-72h133l41 96Zm114 264h301-301Z"/>
+                                    </svg> Add to cart</button>
+                            </div>
+                        </div>`
+                    })
+                }
+            }
+        }
+        function saveCart(productId) {
+            const userId = sessionStorage.getItem("id");
+            const token = sessionStorage.getItem("token");
+            const quantity = 1;
+
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: JSON.stringify({ "userId": userId, "quantity": quantity, "productId": productId }),
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/rest/save-cart", requestOptions)
+                .then((response) => response.text())
+                .then((result) => {
+                    alert(result);
+                    cartPage();
+                })
+                .catch((error) => console.error(error));
+        }
+        function cartPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/cart", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function myOrderPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/userOrder-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function profilePage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/profile", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="My Orders" onclick="myOrderPage()" /></nav>
+            </div>
+            <div class="col md-2 m-3">
+                <nav class="nav"><button class="btn" onclick="profilePage()"><svg xmlns="http://www.w3.org/2000/svg"
+                            height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000">
+                            <path
+                                d="M237-285q54-38 115.5-56.5T480-360q66 0 127.5 18.5T723-285q35-41 52-91t17-104q0-129.67-91.23-220.84-91.23-91.16-221-91.16Q350-792 259-700.84 168-609.67 168-480q0 54 17 104t52 91Zm243-123q-60 0-102-42t-42-102q0-60 42-102t102-42q60 0 102 42t42 102q0 60-42 102t-102 42Zm.28 312Q401-96 331-126t-122.5-82.5Q156-261 126-330.96t-30-149.5Q96-560 126-629.5q30-69.5 82.5-122T330.96-834q69.96-30 149.5-30t149.04 30q69.5 30 122 82.5T834-629.28q30 69.73 30 149Q864-401 834-331t-82.5 122.5Q699-156 629.28-126q-69.73 30-149 30Zm-.28-72q52 0 100-16.5t90-48.5q-43-27-91-41t-99-14q-51 0-99.5 13.5T290-233q42 32 90 48.5T480-168Zm0-312q30 0 51-21t21-51q0-30-21-51t-51-21q-30 0-51 21t-21 51q0 30 21 51t51 21Zm0-72Zm0 319Z" />
+                        </svg> Profile</button></nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path
+                            d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col p-5 mt-5">
+                    <span><strong>Brand:</strong></span>
+                    <div id="filterContent"></div><br />
+                    <label for="price" class="form-label"><strong>Price range:</strong></label>
+                    <div class="row g-2">
+                        <div class="col-auto">
+                            <input type="number" placeholder="Enter min" id="min" class="form-control" />
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" placeholder="Enter max" id="max" class="form-control" />
+                        </div>
+                    </div>
+                    <br />
+                    <input type="button" value="Apply filter" class="btn btn-primary" onclick="filter('none')" />
+                </div>
+                <div class="col-10 p-5 mt-5">
+                    <div class="border border-secondary">
+                        <div class="row p-3">
+                            <div class="col-4">
+                                <div class="input-group">
+                                    <input type="text" placeholder="Enter name" id="name" class="form-control" />
+                                    <button class="btn btn-primary" onclick="filter('none')"><svg
+                                            xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960"
+                                            width="20px" fill="#FFFFFF">
+                                            <path
+                                                d="M765-144 526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l239 239-51 51ZM384-408q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z" />
+                                        </svg> Search</button>
+                                </div>
+                            </div>
+                            <div class="col-4"></div>
+                            <div class="col-2 border text-center">Sort by price</div>
+                            <div class="col-1 border text-center"><button class="btn"
+                                    onclick="filter('descending')"><svg xmlns="http://www.w3.org/2000/svg" height="20px"
+                                        viewBox="0 -960 960 960" width="20px" fill="#1f1f1f">
+                                        <path d="M444-768v438L243-531l-51 51 288 288 288-288-51-51-201 201v-438h-72Z" />
+                                    </svg></button></div>
+                            <div class="col-1 border text-center"><button class="btn" onclick="filter('ascending')"><svg
+                                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960"
+                                        width="20px" fill="#1f1f1f">
+                                        <path d="M444-192v-438L243-429l-51-51 288-288 288 288-51 51-201-201v438h-72Z" />
+                                    </svg></button></div>
+                        </div><br />
+                        <div class="d-flex flex-wrap justify-content-evenly" id="content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </main>
+</body>
+
+</html>

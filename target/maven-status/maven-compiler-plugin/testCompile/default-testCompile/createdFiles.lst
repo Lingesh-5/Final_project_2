@@ -1,0 +1,14 @@
+com\example\ecommerceApplication\services\OrderServiceTest.class
+com\example\ecommerceApplication\repositories\OrderRepositoryTest.class
+com\example\ecommerceApplication\repositories\UserRepositoryTest.class
+com\example\ecommerceApplication\EcommerceApplicationTests.class
+com\example\ecommerceApplication\controllers\OrderControllerTest.class
+com\example\ecommerceApplication\repositories\PaymentRepositoryTest.class
+com\example\ecommerceApplication\repositories\RoleRepositoryTest.class
+com\example\ecommerceApplication\controllers\AuthControllerTest.class
+com\example\ecommerceApplication\services\ProductServiceTest.class
+com\example\ecommerceApplication\controllers\PaymentControllerTest.class
+com\example\ecommerceApplication\services\ProductDisplayServiceTest.class
+com\example\ecommerceApplication\controllers\ProductControllerTest.class
+com\example\ecommerceApplication\controllers\ProductDisplayControllerTest.class
+com\example\ecommerceApplication\repositories\CartRepositoryTest.class

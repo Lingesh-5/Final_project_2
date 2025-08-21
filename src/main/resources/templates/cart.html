@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: aliceblue;">
+    <script>
+        function onload() {
+            const token = sessionStorage.getItem("token");
+            const userId = sessionStorage.getItem("id");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/user/rest/get-cart/${userId}`, requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    const resp = result;
+                    loadData(resp.body.carts);
+                })
+                .catch((error) => console.error(error));
+
+            function loadData(carts) {
+                let totalPrice;
+                const content = document.getElementById("content");
+                content.innerHTML = '';
+                if (carts.length == 0) {
+                    content.innerHTML = `<span>No Record</span>`;
+                } else {
+                    carts.forEach(cart => {
+                        content.innerHTML = content.innerHTML + `
+                        <div class="d-flex flex-row justify-content-around border-bottom border-secondary">
+                            <div>
+                                <strong>${cart.name}</strong><br /><br />
+                                <span>${cart.brand}</span>
+                            </div>
+                            <div >
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="input-group">
+                                        <input type="number" id="quantity" name="quantity" value="${cart.quantity}" class="form-control" readonly />
+                                        <button class="btn btn-primary" type="button" onclick="addRemoveCart(${cart.id}, 'Add', ${cart.quantity})" >+</button>
+                                        <button class="btn btn-primary" type="button" onclick="addRemoveCart(${cart.id}, 'Remove', ${cart.quantity})">-</button>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn btn-danger" onclick="deleteCart(${cart.id})">Remove</button>
+                                    </div>
+                                </div>
+                                <br />₹ ${cart.price}
+                            </div>`;
+                        let totalPriceStr = document.getElementById("totalPrice").value;
+                        totalPrice = parseInt(totalPriceStr);
+                        totalPrice += (cart.quantity * cart.price);
+                        document.getElementById("totalPrice").value = totalPrice;
+
+                        const strongEl = document.getElementById("totalPriceDisplay");
+                        strongEl.innerText = `Total Price: ₹${totalPrice}`;
+
+                    });
+                }
+                sessionStorage.setItem("totalPrice", totalPrice);
+            }
+        }
+        onload();
+        function deleteCart(id) {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "DELETE",
+                headers: myHeaders
+            };
+            fetch(`http://localhost:8080/user/rest/delete-cart/${id}`, requestOptions)
+                .then((response) => response.text())
+                .then((result) => {
+                    alert(result);
+                    document.getElementById("totalPrice").value = 0;
+                    onload();
+                })
+                .catch((error) => console.error(error));
+        }
+        function orderPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/order", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function productPage() {
+            const token = sessionStorage.getItem("token");
+
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + token);
+            const requestOptions = {
+                method: "GET",
+                headers: myHeaders,
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/product-list", requestOptions)
+                .then((response) => response.text())
+                .then((html) => {
+                    document.write(html);
+                    document.close();
+                })
+                .catch((error) => console.error(error));
+        }
+        function addRemoveCart(cartId, task, quantity) {
+            if(quantity != 0 || task != "Remove") {
+                const token = sessionStorage.getItem("token");
+            const quantity = 1;
+
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer " + token);
+
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: JSON.stringify({"cartId": cartId, "quantity": quantity, "task": task}),
+                redirect: "follow"
+            };
+            fetch("http://localhost:8080/user/rest/addRemove-cart", requestOptions)
+                .then((response) => response.text())
+                .then((result) => {
+                    document.getElementById("totalPrice").value = 0;
+                    onload();
+                })
+                .catch((error) => console.error(error));
+            }         
+        }
+    </script>
+    <header>
+        <div class="row border fixed-top" style="background-color:antiquewhite;">
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1"></div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="Products" onclick="productPage()" /></nav>
+            </div>
+            <div class="col md-1 m-3">
+                <nav class="nav"><input type="button" class="btn" value="My Orders" onclick="myOrderPage()" /></nav>
+            </div>
+            <div class="col md-2 m-3 border-start border-dark-subtle">
+                <a href="http://localhost:8080/" class="btn btn-danger link-dark"><svg
+                        xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#1f1f1f" class="d-inline">
+                        <path
+                            d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h264v72H216v528h264v72H216Zm432-168-51-51 81-81H384v-72h294l-81-81 51-51 168 168-168 168Z" />
+                    </svg>Logout</a>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container p-5 mt-5">
+            <div class="border-bottom border-black">
+                <h1><svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px"
+                        fill="#1f1f1f">
+                        <path
+                            d="M263.79-96Q234-96 213-117.21t-21-51Q192-198 213.21-219t51-21Q294-240 315-218.79t21 51Q336-138 314.79-117t-51 21Zm432 0Q666-96 645-117.21t-21-51Q624-198 645.21-219t51-21Q726-240 747-218.79t21 51Q768-138 746.79-117t-51 21ZM253-696l83 192h301l82-192H253Zm-31-72h570q14 0 20.5 11t1.5 23L702.63-476.14Q694-456 676.5-444T637-432H317l-42 72h493v72H276q-43 0-63.5-36.15-20.5-36.16.5-71.85l52-90-131-306H48v-72h133l41 96Zm114 264h301-301Z" />
+                    </svg> Cart</h1>
+            </div><br />
+            <div class="row">
+                <div class="col-10">
+                    <div class="container border border-secondary" id="content">
+                    </div>
+                </div>
+                <div class="col-2">
+                    <strong id="totalPriceDisplay"></strong>
+                    <input type="hidden" id="totalPrice" value="0" /><br />
+                    <input type="button" class="btn btn-primary" value="checkout" onclick="orderPage()" />
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>
