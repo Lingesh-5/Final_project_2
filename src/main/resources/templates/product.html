@@ -180,6 +180,13 @@
                 })
                 .catch((error) => console.error(error));
         }
+        function resetAll() {
+            document.getElementById("name").value = null;
+            document.getElementById("price").value = null;
+            document.getElementById("brand").value = null;
+            document.getElementById("description").value = null;
+            document.getElementById("productId").value = null;
+        }
     </script>
     <header>
         <div class="row border fixed-top" style="background-color:antiquewhite;">
@@ -220,7 +227,7 @@
                         <label for="price" class="form-label">Price:</label>
                         <input type="number" class="form-control" id="price" name="price" required /><br />
                         <input type="button" value="save" class="btn btn-primary" onclick="save()" />
-                        <input type="reset" value="New/Reset" class="btn btn-warning" />
+                        <input type="button" value="New/Reset" class="btn btn-warning" onclick="resetAll()" />
                         <input type="hidden" id="productId" />
                     </div>
                     <div class="col md-6 p-4">
